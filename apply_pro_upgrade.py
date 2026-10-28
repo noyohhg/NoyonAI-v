@@ -94,10 +94,6 @@ p = Path("extracted/NoyonAI/app/src/main/java/com/priya/ai/PriyaService.kt")
 s = p.read_text()
 s = s.replace("import android.os.IBinder" + chr(10), "import android.os.IBinder" + chr(10) + "import android.os.PowerManager" + chr(10), 1)
 s = s.replace("class PriyaService : Service() {" + chr(10) + "    private var live: GeminiLive? = null" + chr(10), "class PriyaService : Service() {" + chr(10) + "    private var live: GeminiLive? = null" + chr(10) + "    private var cpuWakeLock: PowerManager.WakeLock? = null" + chr(10), 1)
-'''class PriyaService : Service() {
-    private var live: GeminiLive? = null
-    private var cpuWakeLock: PowerManager.WakeLock? = null
-''', 1)
 s = s.replace('''        if (live == null) {
             live = GeminiLive(applicationContext).also { PriyaState.live = it; it.start() }
             PriyaState.running.value = true
