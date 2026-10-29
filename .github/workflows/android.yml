@@ -1,4 +1,4 @@
-name: Build NoyonAI APK
+name: Build NoyonAI Project 6 APK
 
 on:
   workflow_dispatch:
@@ -11,6 +11,12 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "project6-apk-pages"
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -41,11 +47,31 @@ jobs:
         working-directory: extracted/NoyonAI
         run: gradle assembleDebug --no-daemon
 
+      - name: Prepare public member download
+        run: |
+          mkdir -p project6/download
+          cp extracted/NoyonAI/app/build/outputs/apk/debug/app-debug.apk project6/download/NoyonAI-Project6.apk
+          test -s project6/download/NoyonAI-Project6.apk
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NoyonAI-Project6-Development-debug-apk
-          path: extracted/NoyonAI/app/build/outputs/apk/debug/app-debug.apk
+          name: NoyonAI-Project6-APK
+          path: project6/download/NoyonAI-Project6.apk
           if-no-files-found: error
+          retention-days: 90
 
-# Project 6 development build: isolated branch; main remains unchanged.
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload public download page artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: project6
+
+      - name: Deploy public download
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+# Project 6 APK is built from the existing Android ZIP on the isolated branch.
+# The APK is a debug build; do not treat it as a signed production release.
