@@ -128,6 +128,26 @@ imports = [
     "import androidx.compose.ui.text.font.FontWeight",
     "import kotlinx.coroutines.Dispatchers",
     "import kotlinx.coroutines.withContext",
+    "import android.content.Intent",
+    "import android.net.Uri",
+    "import androidx.compose.foundation.background",
+    "import androidx.compose.foundation.clickable",
+    "import androidx.compose.foundation.layout.Arrangement",
+    "import androidx.compose.foundation.layout.Column",
+    "import androidx.compose.foundation.layout.Row",
+    "import androidx.compose.foundation.layout.Spacer",
+    "import androidx.compose.foundation.layout.fillMaxSize",
+    "import androidx.compose.foundation.layout.fillMaxWidth",
+    "import androidx.compose.foundation.layout.height",
+    "import androidx.compose.foundation.layout.padding",
+    "import androidx.compose.foundation.layout.weight",
+    "import androidx.compose.foundation.shape.RoundedCornerShape",
+    "import androidx.compose.ui.graphics.Brush",
+    "import androidx.compose.ui.zIndex",
+    "import androidx.compose.material3.Card",
+    "import androidx.compose.material3.Button",
+    "import androidx.compose.material3.OutlinedButton",
+    "import androidx.compose.material3.CardDefaults",
 ]
 package_line = "package com.priya.ai"
 if package_line not in main:
@@ -138,7 +158,7 @@ for imp in imports:
 home_anchor = "val w = maxWidth; val h = maxHeight"
 if home_anchor not in main:
     raise SystemExit("Expected Project 5 home layout anchor not found; refusing unsafe profile patch.")
-main = main.replace(home_anchor, home_anchor + chr(10) + "                MyraProfileAvatar(Modifier.offset(x = w * 0.05f, y = h * 0.035f).size(w * 0.13f))", 1)
+main = main.replace(home_anchor, home_anchor + chr(10) + "                var myraPage by remember { mutableStateOf(\"Home\") }" + chr(10) + "                MyraProfileAvatar(Modifier.offset(x = w * 0.05f, y = h * 0.035f).size(w * 0.13f))" + chr(10) + "                MyraShellOverlay(page = myraPage, onNavigate = { myraPage = it })", 1)
 avatar = '''
 @Composable
 private fun MyraProfileAvatar(modifier: Modifier = Modifier) {
@@ -167,6 +187,113 @@ private fun MyraProfileAvatar(modifier: Modifier = Modifier) {
 '''
 if "private fun MyraProfileAvatar(" not in main:
     main += avatar
+
+shell = r'''
+@Composable
+private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
+    if (page == "Voice") return
+    val ink = Color(0xFF17243D)
+    val blue = Color(0xFF315FEA)
+    Box(Modifier.fillMaxSize().background(Color(0xFFF7F9FF)).zIndex(100f)) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 22.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                MyraProfileAvatar(Modifier.size(58.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("MYRA AI", color = ink, fontSize = 23.sp, fontWeight = FontWeight.Bold)
+                    Text("Your personal AI assistant", color = Color(0xFF6C7892), fontSize = 12.sp)
+                }
+                OutlinedButton(onClick = { onNavigate("Settings") }) { Text("⚙") }
+            }
+            when (page) {
+                "Home" -> {
+                    Spacer(Modifier.weight(0.4f))
+                    Text("Hello, Noyon 👋", color = ink, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+                    Text("What can I help you with today?", color = Color(0xFF6C7892), fontSize = 14.sp)
+                    Spacer(Modifier.height(30.dp))
+                    Box(Modifier.size(208.dp).clip(CircleShape).background(Brush.radialGradient(listOf(Color(0xFF9CCBFF), blue, Color(0xFF2336A8)))).clickable { onNavigate("Voice") }, contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(160.dp).clip(CircleShape).background(Color(0x337FFFFFFF)), contentAlignment = Alignment.Center) {
+                            Text("MYRA", color = Color.White, fontSize = 29.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(Modifier.height(18.dp))
+                    Text("TAP TO TALK", color = blue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.weight(0.5f))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        MyraActionCard("Voice assistant", "Open Project 5 voice", Modifier.weight(1f)) { onNavigate("Voice") }
+                        MyraActionCard("Settings", "Personalize MYRA", Modifier.weight(1f)) { onNavigate("Settings") }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+                "Settings" -> {
+                    Text("Settings", color = ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Text("Personalize your MYRA experience", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 18.dp))
+                    MyraSettingRow("Developer", "Profile, introduction and channel") { onNavigate("Developer") }
+                    MyraSettingRow("API Settings", "Gemini provider and API key") { onNavigate("API") }
+                    MyraSettingRow("Voice Assistant", "Open the original voice experience") { onNavigate("Voice") }
+                    if (page == "API") {
+                        Text("API settings will be connected in the next update.", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp))
+                    }
+                    Spacer(Modifier.weight(1f))
+                }
+                "Developer" -> {
+                    Spacer(Modifier.height(24.dp))
+                    MyraProfileAvatar(Modifier.size(112.dp))
+                    Spacer(Modifier.height(14.dp))
+                    Text("DEVELOPER", color = Color(0xFF6C7892), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Noyon", color = ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text("Creator of MYRA AI", color = Color(0xFF6C7892), fontSize = 14.sp)
+                    Spacer(Modifier.height(22.dp))
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    Button(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/allhackfree288"))) } }) { Text("Join Channel") }
+                    Spacer(Modifier.weight(1f))
+                    OutlinedButton(onClick = { onNavigate("Settings") }, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
+                }
+            }
+            if (page != "Developer") {
+                Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                    MyraNavItem("⌂", "Home", page == "Home", blue) { onNavigate("Home") }
+                    MyraNavItem("⚙", "Settings", page == "Settings" || page == "API", blue) { onNavigate("Settings") }
+                    MyraNavItem("◉", "Voice", false, blue) { onNavigate("Voice") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MyraActionCard(title: String, subtitle: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(modifier = modifier.clickable { onClick() }, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, color = Color(0xFF17243D), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Spacer(Modifier.height(5.dp))
+            Text(subtitle, color = Color(0xFF6C7892), fontSize = 11.sp)
+        }
+    }
+}
+
+@Composable
+private fun MyraSettingRow(title: String, subtitle: String, onClick: () -> Unit) {
+    Card(Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable { onClick() }, shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, color = Color(0xFF17243D), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(subtitle, color = Color(0xFF6C7892), fontSize = 12.sp)
+            }
+            Text("›", color = Color(0xFF315FEA), fontSize = 26.sp)
+        }
+    }
+}
+
+@Composable
+private fun MyraNavItem(icon: String, label: String, selected: Boolean, blue: Color, onClick: () -> Unit) {
+    Column(Modifier.clip(RoundedCornerShape(14.dp)).clickable { onClick() }.padding(horizontal = 18.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(icon, color = if (selected) blue else Color(0xFF7D879B), fontSize = 21.sp)
+        Text(label, color = if (selected) blue else Color(0xFF7D879B), fontSize = 11.sp)
+    }
+}
+'''
+if "private fun MyraShellOverlay(" not in main:
+    main += shell
 main_file.write_text(main)
 
 print("Project 5 PRO patches applied.")
