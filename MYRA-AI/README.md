@@ -1,18 +1,28 @@
 # MYRA AI — Project 6
 
-This folder is an isolated first web-demo scaffold for Project 6. It was added without modifying the existing NoyonAI ZIP files, Android workflow, or `apply_pro_upgrade.py`.
+An isolated MYRA AI web demo and Android WebView app project. Existing NoyonAI ZIP files and the pre-existing Project 5 workflow are left unchanged.
 
-## Included in this initial demo
-- Responsive light blue/white interface with animated AI orb and on/off control
-- Chat UI and quick prompts
-- Developer profile fields and Telegram channel link
-- Gemini API settings and official API-key page link
-- Preferences page and local browser persistence
+## Features included
+- Responsive light blue/white interface and animated AI orb with pause/resume control
+- Gemini text chat with API/model settings and official key link
+- Voice input using Android's native speech recognizer in the APK; browser SpeechRecognition where supported
+- Voice output through Android text-to-speech and browser speech synthesis where supported
+- Image Studio using Gemini image-output endpoint (availability depends on API/model access)
+- Local chat history and editable local memory
+- Developer profile fields and configurable Telegram channel link
+- Language, appearance and voice preferences
 
-## Important limitations
-- This is a browser demo, not a completed Android APK.
-- The Gemini key is stored in browser local storage for demo purposes only; do not use this pattern for a production release. A secure backend is needed to protect API credentials.
-- Voice conversation, image generation, chat-history persistence, profile photo upload, and native Android integration are not implemented yet.
+## Build the Android APK
+1. Open the GitHub repository's **Actions** tab.
+2. Select **Build MYRA AI APK**.
+3. Press **Run workflow** and wait for the job to finish.
+4. Download the **MYRA-AI-debug-apk** artifact from the successful run and extract the APK.
 
-## Open the demo
-Open `index.html` in a browser or use GitHub Pages after enabling Pages for this repository and selecting the root folder as the source. Since this file is under `MYRA-AI/`, a Pages site may need the URL path `/MYRA-AI/`.
+Workflow: https://github.com/noyohhg/NoyonAI-v/actions/workflows/myra-android.yml
+
+## Important
+- This Android package is a WebView shell around the bundled interface, not a fully native AI engine.
+- Add your Gemini key in API Settings. The demo stores the key locally on the device/browser. For a public production release, use a secure backend instead of shipping user API keys to a browser client.
+- Image generation requires API access to an image-output-capable Gemini model; model availability may vary by account and region.
+- Chat history and memory are local to the app's WebView storage; they are not cloud-synced.
+- Developer photo upload and background wake-word listening are not implemented in this first APK scaffold.
