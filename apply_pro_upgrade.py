@@ -201,9 +201,10 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
         }
         return
     }
-    val ink = Color(0xFF17243D)
-    val blue = Color(0xFF315FEA)
-    Box(Modifier.fillMaxSize().background(Color(0xFFF7F9FF)).zIndex(100f)) {
+    val ink = Color(0xFFF3ECFF)
+    val blue = Color(0xFFD35BFF)
+    val panel = Color(0xFF100D22)
+    Box(Modifier.fillMaxSize().background(Color(0xFF05050D)).zIndex(100f)) {
         Column(Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Row(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 22.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 MyraProfileAvatar(Modifier.size(58.dp))
