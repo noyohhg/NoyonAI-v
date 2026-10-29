@@ -117,4 +117,55 @@ s = s.replace('''    override fun onDestroy() {
 ''', 1)
 p.write_text(s)
 
+# Add the requested developer profile photo to the extracted Project 5 build copy.
+main_file = root / "MainActivity.kt"
+main = main_file.read_text()
+imports = [
+    "import android.graphics.BitmapFactory",
+    "import java.net.URL",
+    "import androidx.compose.foundation.shape.CircleShape",
+    "import androidx.compose.ui.graphics.asImageBitmap",
+    "import kotlinx.coroutines.Dispatchers",
+    "import kotlinx.coroutines.withContext",
+]
+package_line = "package com.priya.ai"
+if package_line not in main:
+    raise SystemExit("Expected Kotlin package declaration not found; refusing unsafe profile patch.")
+for imp in imports:
+    if imp not in main:
+        main = main.replace(package_line, package_line + chr(10) + imp, 1)
+home_anchor = "val w = maxWidth; val h = maxHeight"
+if home_anchor not in main:
+    raise SystemExit("Expected Project 5 home layout anchor not found; refusing unsafe profile patch.")
+main = main.replace(home_anchor, home_anchor + chr(10) + "                MyraProfileAvatar(Modifier.offset(x = w * 0.05f, y = h * 0.035f).size(w * 0.13f))", 1)
+avatar = '''
+@Composable
+private fun MyraProfileAvatar(modifier: Modifier = Modifier) {
+    val photoUrl = "https://i.ibb.co/5gzzzNDD/1000012900.jpg"
+    val bitmap by produceState<android.graphics.Bitmap?>(initialValue = null, photoUrl) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val connection = URL(photoUrl).openConnection()
+                connection.connectTimeout = 8000
+                connection.readTimeout = 8000
+                connection.getInputStream().use { BitmapFactory.decodeStream(it) }
+            }.getOrNull()
+        }
+    }
+    Box(modifier.clip(CircleShape), contentAlignment = Alignment.Center) {
+        if (bitmap != null) {
+            Image(bitmap = bitmap!!.asImageBitmap(), contentDescription = "Developer profile photo",
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Box(Modifier.fillMaxSize().background(Color(0xFF263D68)), contentAlignment = Alignment.Center) {
+                Text("N", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+'''
+if "private fun MyraProfileAvatar(" not in main:
+    main += avatar
+main_file.write_text(main)
+
 print("Project 5 PRO patches applied.")
