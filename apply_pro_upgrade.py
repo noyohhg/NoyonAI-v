@@ -211,7 +211,7 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                     Text("What can I help you with today?", color = Color(0xFF6C7892), fontSize = 14.sp)
                     Spacer(Modifier.height(30.dp))
                     Box(Modifier.size(208.dp).clip(CircleShape).background(Brush.radialGradient(listOf(Color(0xFF9CCBFF), blue, Color(0xFF2336A8)))).clickable { onNavigate("Voice") }, contentAlignment = Alignment.Center) {
-                        Box(Modifier.size(160.dp).clip(CircleShape).background(Color(0x337FFFFFFF)), contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(160.dp).clip(CircleShape).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
                             Text("MYRA", color = Color.White, fontSize = 29.sp, fontWeight = FontWeight.Bold)
                         }
                     }
