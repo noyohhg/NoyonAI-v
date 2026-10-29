@@ -295,12 +295,12 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                     OutlinedButton(onClick = { onNavigate("Settings") }, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
                 }
             }
-            if (page != "Developer") {
-                Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    MyraNavItem("⌂", "Home", page == "Home", blue) { onNavigate("Home") }
-                    MyraNavItem("⚙", "Settings", page == "Settings", blue) { onNavigate("Settings") }
-                    MyraNavItem("◉", "Chat", page == "Chat", blue) { onNavigate("Chat") }
-                }
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp).clip(RoundedCornerShape(30.dp)).background(Color(0xFF17132F)).padding(horizontal = 2.dp, vertical = 5.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                MyraNavItem("⌂", "Home", page == "Home", blue) { onNavigate("Home") }
+                MyraNavItem("▤", "Chat", page == "Chat", blue) { onNavigate("Chat") }
+                MyraNavItem("✦", "AI", page == "Voice", blue) { onNavigate("Voice") }
+                MyraNavItem("◷", "History", page == "History", blue) { onNavigate("History") }
+                MyraNavItem("⚙", "Settings", page == "Settings", blue) { onNavigate("Settings") }
             }
         }
     }
