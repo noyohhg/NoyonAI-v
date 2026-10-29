@@ -228,11 +228,8 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                     Text("Settings", color = ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                     Text("Personalize your MYRA experience", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 18.dp))
                     MyraSettingRow("Developer", "Profile, introduction and channel") { onNavigate("Developer") }
-                    MyraSettingRow("API Settings", "Gemini provider and API key") { onNavigate("API") }
                     MyraSettingRow("Voice Assistant", "Open the original voice experience") { onNavigate("Voice") }
-                    if (page == "API") {
-                        Text("API settings will be connected in the next update.", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp))
-                    }
+                    MyraSettingRow("Home Screen", "Return to the MYRA home screen") { onNavigate("Home") }
                     Spacer(Modifier.weight(1f))
                 }
                 "Developer" -> {
@@ -252,7 +249,7 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
             if (page != "Developer") {
                 Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                     MyraNavItem("⌂", "Home", page == "Home", blue) { onNavigate("Home") }
-                    MyraNavItem("⚙", "Settings", page == "Settings" || page == "API", blue) { onNavigate("Settings") }
+                    MyraNavItem("⚙", "Settings", page == "Settings", blue) { onNavigate("Settings") }
                     MyraNavItem("◉", "Voice", false, blue) { onNavigate("Voice") }
                 }
             }
