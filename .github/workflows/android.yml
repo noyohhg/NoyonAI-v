@@ -48,4 +48,4 @@ jobs:
           path: extracted/NoyonAI/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
-# Trigger APK build without changing build behavior.
+# MYRA incremental update build: preserve source ZIPs and build APK from the patched extraction.
