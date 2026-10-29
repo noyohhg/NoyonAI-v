@@ -191,7 +191,15 @@ if "private fun MyraProfileAvatar(" not in main:
 shell = r'''
 @Composable
 private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
-    if (page == "Voice") return
+    if (page == "Voice") {
+        Box(Modifier.fillMaxSize().zIndex(100f)) {
+            Button(
+                onClick = { onNavigate("Home") },
+                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
+            ) { Text("← MYRA Home") }
+        }
+        return
+    }
     val ink = Color(0xFF17243D)
     val blue = Color(0xFF315FEA)
     Box(Modifier.fillMaxSize().background(Color(0xFFF7F9FF)).zIndex(100f)) {
