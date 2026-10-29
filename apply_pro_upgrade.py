@@ -192,7 +192,7 @@ if "private fun MyraProfileAvatar(" not in main:
 shell = r'''
 @Composable
 private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
-    if (page == "Voice") {
+    if (page == "Voice" || page == "Chat") {
         Box(Modifier.fillMaxSize().zIndex(100f)) {
             Button(
                 onClick = { onNavigate("Home") },
@@ -228,8 +228,8 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                     Text("TAP TO TALK", color = blue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.weight(0.5f))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        MyraActionCard("Voice assistant", "Open Project 5 voice", Modifier.weight(1f)) { onNavigate("Voice") }
-                        MyraActionCard("Settings", "Personalize MYRA", Modifier.weight(1f)) { onNavigate("Settings") }
+                        MyraActionCard("Chat / Voice", "Talk with MYRA", Modifier.weight(1f)) { onNavigate("Chat") }
+                        MyraActionCard("History", "Saved assistant memory", Modifier.weight(1f)) { onNavigate("History") }
                     }
                     Spacer(Modifier.height(16.dp))
                 }
@@ -238,9 +238,21 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                     Text("Personalize your MYRA experience", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 18.dp))
                     MyraSettingRow("Developer", "Profile, introduction and channel") { onNavigate("Developer") }
                     MyraSettingRow("API Settings", "Gemini provider and API key") { onNavigate("API") }
-                    MyraSettingRow("Chat / Voice", "Open the original assistant experience") { onNavigate("Voice") }
+                    MyraSettingRow("Chat / Voice", "Open the original assistant experience") { onNavigate("Chat") }
+                    MyraSettingRow("History", "View saved assistant memory") { onNavigate("History") }
                     MyraSettingRow("Home Screen", "Return to the MYRA home screen") { onNavigate("Home") }
                     Spacer(Modifier.weight(1f))
+                }
+                "History" -> {
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    Text("History", color = ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Text("Saved assistant memory", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp))
+                    val savedHistory = Store.recent(context)
+                    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Text(savedHistory.ifBlank { "No saved history yet. Start talking to MYRA to build your memory." }, color = ink, fontSize = 14.sp, modifier = Modifier.padding(16.dp))
+                    }
+                    Spacer(Modifier.weight(1f))
+                    OutlinedButton(onClick = { onNavigate("Settings") }, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
                 }
                 "API" -> {
                     val context = androidx.compose.ui.platform.LocalContext.current
@@ -282,7 +294,7 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                 Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                     MyraNavItem("⌂", "Home", page == "Home", blue) { onNavigate("Home") }
                     MyraNavItem("⚙", "Settings", page == "Settings", blue) { onNavigate("Settings") }
-                    MyraNavItem("◉", "Voice", false, blue) { onNavigate("Voice") }
+                    MyraNavItem("◉", "Chat", page == "Chat", blue) { onNavigate("Chat") }
                 }
             }
         }
