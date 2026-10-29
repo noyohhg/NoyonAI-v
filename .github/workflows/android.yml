@@ -11,12 +11,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "project6-apk-pages"
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -61,17 +55,6 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload public download page artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: project6
-
-      - name: Deploy public download
-        id: deployment
-        uses: actions/deploy-pages@v4
 
 # Project 6 APK is built from the existing Android ZIP on the isolated branch.
 # The APK is a debug build; do not treat it as a signed production release.
