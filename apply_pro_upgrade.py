@@ -125,6 +125,7 @@ imports = [
     "import java.net.URL",
     "import androidx.compose.foundation.shape.CircleShape",
     "import androidx.compose.ui.graphics.asImageBitmap",
+    "import androidx.compose.ui.text.font.FontWeight",
     "import kotlinx.coroutines.Dispatchers",
     "import kotlinx.coroutines.withContext",
 ]
