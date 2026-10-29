@@ -120,6 +120,7 @@ p.write_text(s)
 # Add the requested developer profile photo to the extracted Project 5 build copy.
 main_file = root / "MainActivity.kt"
 main = main_file.read_text()
+main = main.replace("import androidx.compose.foundation.layout.weight\\n", "")
 imports = [
     "import android.graphics.BitmapFactory",
     "import java.net.URL",
@@ -140,7 +141,6 @@ imports = [
     "import androidx.compose.foundation.layout.fillMaxWidth",
     "import androidx.compose.foundation.layout.height",
     "import androidx.compose.foundation.layout.padding",
-    "import androidx.compose.foundation.layout.weight",
     "import androidx.compose.foundation.shape.RoundedCornerShape",
     "import androidx.compose.ui.graphics.Brush",
     "import androidx.compose.ui.zIndex",
