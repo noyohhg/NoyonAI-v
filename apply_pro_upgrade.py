@@ -148,6 +148,7 @@ imports = [
     "import androidx.compose.material3.Button",
     "import androidx.compose.material3.OutlinedButton",
     "import androidx.compose.material3.CardDefaults",
+    "import androidx.compose.material3.OutlinedTextField",
 ]
 package_line = "package com.priya.ai"
 if package_line not in main:
@@ -236,9 +237,32 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                     Text("Settings", color = ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                     Text("Personalize your MYRA experience", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 18.dp))
                     MyraSettingRow("Developer", "Profile, introduction and channel") { onNavigate("Developer") }
-                    MyraSettingRow("Voice Assistant", "Open the original voice experience") { onNavigate("Voice") }
+                    MyraSettingRow("API Settings", "Gemini provider and API key") { onNavigate("API") }
+                    MyraSettingRow("Chat / Voice", "Open the original assistant experience") { onNavigate("Voice") }
                     MyraSettingRow("Home Screen", "Return to the MYRA home screen") { onNavigate("Home") }
                     Spacer(Modifier.weight(1f))
+                }
+                "API" -> {
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    var apiKey by remember { mutableStateOf("") }
+                    var model by remember { mutableStateOf("gemini-2.5-flash") }
+                    Text("API Settings", color = ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Text("Provider: Google Gemini", color = Color(0xFF6C7892), fontSize = 14.sp, modifier = Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 16.dp))
+                    OutlinedTextField(value = apiKey, onValueChange = { apiKey = it }, label = { Text("Gemini API Key") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(value = model, onValueChange = { model = it }, label = { Text("Model name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
+                    Text("Get a key from Google AI Studio. Keep your key private.", color = Color(0xFF6C7892), fontSize = 12.sp)
+                    OutlinedButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/apikey"))) } }, modifier = Modifier.fillMaxWidth()) { Text("Get API Key") }
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = {
+                        Store.setApiKey(context, apiKey.trim())
+                        Store.setModel(context, model.trim().ifBlank { "gemini-2.5-flash" })
+                        Toast.makeText(context, "API settings saved", Toast.LENGTH_SHORT).show()
+                        onNavigate("Settings")
+                    }, modifier = Modifier.fillMaxWidth()) { Text("Save API Settings") }
+                    Spacer(Modifier.weight(1f))
+                    OutlinedButton(onClick = { onNavigate("Settings") }, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
                 }
                 "Developer" -> {
                     Spacer(Modifier.height(24.dp))
