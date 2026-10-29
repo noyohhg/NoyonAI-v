@@ -293,6 +293,6 @@ if "private fun MyraShellOverlay(" not in main:
     main += shell
 main_file.write_text(main)
 
-print("Project 5 PRO patches applied.")
+print("Project 5 PRO patches applied: MYRA Home/Settings shell enabled.")
 
 # MYRA incremental update build marker
