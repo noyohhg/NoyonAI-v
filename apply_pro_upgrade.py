@@ -237,11 +237,15 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
                 "Settings" -> {
                     Text("Settings", color = ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                     Text("Personalize your MYRA experience", color = Color(0xFF6C7892), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 18.dp))
-                    MyraSettingRow("Developer", "Profile, introduction and channel") { onNavigate("Developer") }
-                    MyraSettingRow("API Settings", "Gemini provider and API key") { onNavigate("API") }
-                    MyraSettingRow("Chat / Voice", "Open the original assistant experience") { onNavigate("Chat") }
-                    MyraSettingRow("History", "View saved assistant memory") { onNavigate("History") }
-                    MyraSettingRow("Home Screen", "Return to the MYRA home screen") { onNavigate("Home") }
+                    MyraSettingRow("Connections", "Gemini API key and model settings") { onNavigate("API") }
+                    MyraSettingRow("Voice & Language", "Voice and response language") { onNavigate("API") }
+                    MyraSettingRow("Chats & Memory", "Saved assistant memory") { onNavigate("History") }
+                    MyraSettingRow("Look & Feel", "Dark galaxy appearance") { onNavigate("Home") }
+                    MyraSettingRow("Voice Keyboard", "Voice input and assistant") { onNavigate("Chat") }
+                    MyraSettingRow("Broadcast & Voice Rooms", "Voice assistant access") { onNavigate("Chat") }
+                    MyraSettingRow("Phone control", "Assistant controls and permissions") { onNavigate("Chat") }
+                    MyraSettingRow("Developer Profile", "Noyon · Creator of MYRA AI") { onNavigate("Developer") }
+                    MyraSettingRow("Privacy & About", "App information and support") { onNavigate("Developer") }
                     Spacer(Modifier.weight(1f))
                 }
                 "History" -> {
@@ -304,22 +308,22 @@ private fun MyraShellOverlay(page: String, onNavigate: (String) -> Unit) {
 
 @Composable
 private fun MyraActionCard(title: String, subtitle: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Card(modifier = modifier.clickable { onClick() }, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
+    Card(modifier = modifier.clickable { onClick() }, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF100D22)), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
         Column(Modifier.padding(16.dp)) {
-            Text(title, color = Color(0xFF17243D), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(title, color = Color(0xFFF3ECFF), fontWeight = FontWeight.Bold, fontSize = 14.sp)
             Spacer(Modifier.height(5.dp))
-            Text(subtitle, color = Color(0xFF6C7892), fontSize = 11.sp)
+            Text(subtitle, color = Color(0xFFAAA0C4), fontSize = 11.sp)
         }
     }
 }
 
 @Composable
 private fun MyraSettingRow(title: String, subtitle: String, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable { onClick() }, shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+    Card(Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable { onClick() }, shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF100D22)), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(title, color = Color(0xFF17243D), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                Text(subtitle, color = Color(0xFF6C7892), fontSize = 12.sp)
+                Text(title, color = Color(0xFFF3ECFF), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(subtitle, color = Color(0xFFAAA0C4), fontSize = 12.sp)
             }
             Text("›", color = Color(0xFF315FEA), fontSize = 26.sp)
         }
