@@ -182,17 +182,23 @@ app.post('/api/configure', async (req, res) => {
     state.geminiKey = nextGeminiKey;
     state.allowedChats = Array.isArray(body.chats) ? body.chats.map(String) : [];
     state.preferences = {
-      enabled: Boolean(body.settings?.enabled),
-      language: String(body.settings?.language || 'Auto detect'),
-      tone: String(body.settings?.tone || 'Friendly'),
-      prompt: String(body.settings?.prompt || 'Reply naturally and briefly.').slice(0, 2000),
-      delay: Math.max(0, Math.min(15, Number(body.settings?.delay) || 0)),
+      enabled: typeof body.settings?.enabled === 'boolean'
+        ? body.settings.enabled
+        : state.preferences.enabled,
+      language: String(body.settings?.language || state.preferences.language || 'Auto detect'),
+      tone: String(body.settings?.tone || state.preferences.tone || 'Friendly'),
+      prompt: String(body.settings?.prompt || state.preferences.prompt || 'Reply naturally and briefly.').slice(0, 2000),
+      delay: Math.max(0, Math.min(15, Number(body.settings?.delay ?? state.preferences.delay) || 0)),
     };
     if (state.session && (!state.connected || !state.client?.connected)) {
       await startTelegram(state, state.session);
     }
     await persistAccount(state);
-    res.json({ ok: true, telegramConnected: state.connected });
+    res.json({
+      ok: true,
+      telegramConnected: state.connected,
+      autoReplyEnabled: Boolean(state.preferences.enabled),
+    });
   } catch (err) {
     res.status(503).json({ error: err?.message || 'Worker configuration failed' });
   }
@@ -259,9 +265,19 @@ app.get('/api/status', async (req, res) => {
     if (!state.client && state.session && apiId && apiHash) {
       await startTelegram(state, state.session);
     }
-    if (!state.connected) return res.json({ connected: false });
+    if (!state.connected) {
+      return res.json({
+        connected: false,
+        autoReplyEnabled: Boolean(state.preferences.enabled),
+      });
+    }
     const me = await state.client.getMe();
-    res.json({ connected: true, username: me.username || null, id: String(me.id) });
+    res.json({
+      connected: true,
+      username: me.username || null,
+      id: String(me.id),
+      autoReplyEnabled: Boolean(state.preferences.enabled),
+    });
   } catch (err) {
     res.json({ connected: false, error: err?.message || 'Telegram status unavailable' });
   }
