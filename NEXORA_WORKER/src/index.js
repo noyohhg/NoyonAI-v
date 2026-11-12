@@ -59,6 +59,8 @@ async function startTelegram(session = '') {
   if (client?.connected) {
     try { await client.disconnect(); } catch {}
   }
+  // A new TelegramClient needs its own incoming-message handler.
+  handlerAttached = false;
   client = new TelegramClient(new StringSession(session), apiId, apiHash, {
     connectionRetries: 5,
   });
@@ -97,7 +99,6 @@ async function replyWithGemini(message) {
 
 function attachReplyHandler() {
   if (!client || handlerAttached) return;
-  handlerAttached = true;
   client.addEventHandler(async event => {
     const message = event.message;
     if (!connected || !preferences.enabled || !message?.message || message.out) return;
@@ -106,7 +107,9 @@ function attachReplyHandler() {
       const id = String(message.chatId || '');
       const username = entity?.username ? '@' + entity.username.toLowerCase() : '';
       const title = String(entity?.title || entity?.firstName || '').toLowerCase();
-      const allowed = allowedChats.some(value => {
+      // An empty allowlist means reply to every incoming Telegram chat.
+      // If the user has configured a list, keep its existing filtering behavior.
+      const allowed = allowedChats.length === 0 || allowedChats.some(value => {
         const item = String(value).trim().toLowerCase();
         return item && (item === id || item === username || item === title);
       });
@@ -120,6 +123,7 @@ function attachReplyHandler() {
       console.error('Auto reply failed:', err?.message || 'unknown error');
     }
   }, new NewMessage({ incoming: true }));
+  handlerAttached = true;
 }
 
 app.post('/api/configure', async (req, res) => {
