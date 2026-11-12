@@ -109,7 +109,7 @@ async function replyWithGemini(state, message) {
     message,
     'Write only the suggested reply.',
   ].join('\n');
-  const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-2.5-flash'];
+  const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
   let lastError = '';
   for (const model of models) {
     const response = await fetch(
@@ -143,8 +143,23 @@ function attachReplyHandler(state) {
     const message = event.message;
     if (!state.connected || !state.preferences.enabled || !message?.message || message.out) return;
     const chatId = String(message.chatId || '');
-    console.log('Incoming Telegram message received; account:', accountKey(state.userId).slice(0, 10), 'chat:', chatId || 'unknown');
     try {
+      // The dashboard's selected-chat list is per account. Never answer
+      // messages outside that account's explicitly enabled chat list.
+      if (!state.allowedChats.length) return;
+      const entity = await message.getChat().catch(() => null);
+      const candidates = [
+        chatId,
+        entity?.username ? '@' + entity.username : '',
+        entity?.username || '',
+        entity?.title || '',
+        entity?.firstName || '',
+      ].map(value => String(value).trim().toLowerCase()).filter(Boolean);
+      const allowed = state.allowedChats
+        .map(value => String(value).trim().toLowerCase())
+        .filter(Boolean);
+      if (!allowed.some(value => candidates.includes(value))) return;
+      console.log('Incoming Telegram message received; account:', accountKey(state.userId).slice(0, 10), 'chat:', chatId || 'unknown');
       const delay = Math.max(0, Math.min(15, Number(state.preferences.delay) || 0));
       if (delay) await new Promise(resolve => setTimeout(resolve, delay * 1000));
       const answer = await replyWithGemini(state, message.message);
