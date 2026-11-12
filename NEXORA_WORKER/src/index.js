@@ -61,7 +61,7 @@ function getRequestAccount(req) {
 }
 
 function protect(req, res, next) {
-  const supplied = (req.get('authorization') || '').replace(/^Bearer\\s+/i, '');
+  const supplied = (req.get('authorization') || '').replace(/^Bearer\s+/i, '');
   if (!TOKEN || supplied !== TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -108,7 +108,7 @@ async function replyWithGemini(state, message) {
     'Incoming Telegram message:',
     message,
     'Write only the suggested reply.',
-  ].join('\\n');
+  ].join('\n');
   const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-2.5-flash'];
   let lastError = '';
   for (const model of models) {
