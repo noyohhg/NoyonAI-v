@@ -267,6 +267,31 @@ app.get('/api/status', async (req, res) => {
   }
 });
 
+
+app.post('/api/test-message', async (req, res) => {
+  try {
+    const state = getRequestAccount(req);
+    if (!state.connected || !state.client?.connected) {
+      return res.status(409).json({ error: 'Telegram account is not connected' });
+    }
+    const target = String(req.body?.target || '').trim();
+    const message = String(req.body?.message || '').trim();
+    if (!target || !message) {
+      return res.status(400).json({ error: 'Telegram ID/username and test message are required' });
+    }
+    if (message.length > 4000) {
+      return res.status(400).json({ error: 'Test message is too long (maximum 4000 characters)' });
+    }
+    const entity = await state.client.getEntity(target);
+    await state.client.sendMessage(entity, { message });
+    console.log('Telegram test message sent; account:', accountKey(state.userId).slice(0, 10));
+    res.json({ ok: true, message: 'Test message sent' });
+  } catch (err) {
+    console.error('Telegram test message failed:', err?.message || err);
+    res.status(400).json({ error: err?.message || 'Could not send Telegram test message' });
+  }
+});
+
 async function boot() {
   await mkdir(DATA_DIR, { recursive: true, mode: 0o700 });
   const files = await readdir(DATA_DIR).catch(() => []);
