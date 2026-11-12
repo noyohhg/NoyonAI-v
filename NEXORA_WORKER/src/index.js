@@ -146,19 +146,20 @@ function attachReplyHandler(state) {
     try {
       // The dashboard's selected-chat list is per account. Never answer
       // messages outside that account's explicitly enabled chat list.
-      if (!state.allowedChats.length) return;
-      const entity = await message.getChat().catch(() => null);
-      const candidates = [
-        chatId,
-        entity?.username ? '@' + entity.username : '',
-        entity?.username || '',
-        entity?.title || '',
-        entity?.firstName || '',
-      ].map(value => String(value).trim().toLowerCase()).filter(Boolean);
-      const allowed = state.allowedChats
-        .map(value => String(value).trim().toLowerCase())
-        .filter(Boolean);
-      if (!allowed.some(value => candidates.includes(value))) return;
+      if (state.allowedChats.length) {
+        const entity = await message.getChat().catch(() => null);
+        const candidates = [
+          chatId,
+          entity?.username ? '@' + entity.username : '',
+          entity?.username || '',
+          entity?.title || '',
+          entity?.firstName || '',
+        ].map(value => String(value).trim().toLowerCase()).filter(Boolean);
+        const allowed = state.allowedChats
+          .map(value => String(value).trim().toLowerCase())
+          .filter(Boolean);
+        if (!allowed.some(value => candidates.includes(value))) return;
+      }
       console.log('Incoming Telegram message received; account:', accountKey(state.userId).slice(0, 10), 'chat:', chatId || 'unknown');
       const delay = Math.max(0, Math.min(15, Number(state.preferences.delay) || 0));
       if (delay) await new Promise(resolve => setTimeout(resolve, delay * 1000));
