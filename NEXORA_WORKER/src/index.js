@@ -114,9 +114,7 @@ function attachReplyHandler() {
         return item && (item === id || item === username || item === title);
       });
       if (!allowed) return;
-      if (preferences.delay > 0) {
-        await new Promise(resolve => setTimeout(resolve, Math.min(15, preferences.delay) * 1000));
-      }
+      // Generate and send the reply immediately; do not add an artificial delay.
       const answer = await replyWithGemini(message.message);
       if (answer) await message.reply({ message: answer });
     } catch (err) {
