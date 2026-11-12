@@ -79,22 +79,32 @@ async function replyWithGemini(message) {
     'Incoming Telegram message:',
     message,
     'Write only the suggested reply.',
-  ].join('\\n');
-  const response = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=' +
-      encodeURIComponent(geminiKey),
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
-      }),
+  ].join('\n');
+  const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-2.5-flash'];
+  let lastError = '';
+  for (const model of models) {
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' +
+        encodeURIComponent(geminiKey),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
+        }),
+      }
+    );
+    const data = await response.json().catch(() => ({}));
+    if (response.ok) {
+      const answer = data.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim() || '';
+      if (answer) return answer;
+      throw new Error('Gemini returned an empty reply');
     }
-  );
-  if (!response.ok) throw new Error('Gemini API request failed: ' + response.status);
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim() || '';
+    lastError = data.error?.message || ('Gemini API request failed: ' + response.status);
+    if (response.status !== 404 && response.status !== 400) break;
+  }
+  throw new Error(lastError || 'Gemini could not generate a reply');
 }
 
 function attachReplyHandler() {
@@ -102,26 +112,21 @@ function attachReplyHandler() {
   client.addEventHandler(async event => {
     const message = event.message;
     if (!connected || !preferences.enabled || !message?.message || message.out) return;
+    const chatId = String(message.chatId || '');
+    console.log('Incoming Telegram message received; chat:', chatId || 'unknown');
     try {
-      const entity = await client.getEntity(message.peerId);
-      const id = String(message.chatId || '');
-      const username = entity?.username ? '@' + entity.username.toLowerCase() : '';
-      const title = String(entity?.title || entity?.firstName || '').toLowerCase();
-      // An empty allowlist means reply to every incoming Telegram chat.
-      // If the user has configured a list, keep its existing filtering behavior.
-      const allowed = allowedChats.length === 0 || allowedChats.some(value => {
-        const item = String(value).trim().toLowerCase();
-        return item && (item === id || item === username || item === title);
-      });
-      if (!allowed) return;
-      // Generate and send the reply immediately; do not add an artificial delay.
+      // Reply to every incoming chat for the live test; do not let an old
+      // allowlist setting silently block the sender's test message.
       const answer = await replyWithGemini(message.message);
-      if (answer) await message.reply({ message: answer });
+      if (!answer) throw new Error('AI generated an empty reply');
+      await message.reply({ message: answer });
+      console.log('Telegram auto-reply sent; chat:', chatId || 'unknown');
     } catch (err) {
       console.error('Auto reply failed:', err?.message || 'unknown error');
     }
-  }, new NewMessage({ incoming: true }));
+  }, new NewMessage({}));
   handlerAttached = true;
+  console.log('Telegram incoming-message handler attached');
 }
 
 app.post('/api/configure', async (req, res) => {
@@ -145,7 +150,7 @@ app.post('/api/configure', async (req, res) => {
       delay: Math.max(0, Math.min(15, Number(body.settings?.delay) || 0)),
     };
     const session = await loadSession();
-    if (session && !connected) {
+    if (session && (!connected || !client?.connected)) {
       await startTelegram(session);
     }
     res.json({ ok: true, telegramConnected: connected });
