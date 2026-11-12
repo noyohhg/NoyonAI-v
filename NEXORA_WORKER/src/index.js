@@ -10,6 +10,7 @@ app.use(express.json({ limit: '64kb' }));
 const PORT = Number(process.env.PORT || 3000);
 const TOKEN = process.env.NEXORA_WORKER_TOKEN || '';
 const SESSION_FILE = '/data/telegram-session.txt';
+const CONFIG_FILE = '/data/worker-config.json';
 
 let apiId = 0;
 let apiHash = '';
@@ -52,6 +53,19 @@ async function loadSession() {
 async function persistSession() {
   if (!client) throw new Error('Telegram client is not initialized');
   await writeFile(SESSION_FILE, client.session.save(), { encoding: 'utf8', mode: 0o600 });
+}
+
+async function loadWorkerConfig() {
+  try {
+    return JSON.parse(await readFile(CONFIG_FILE, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+async function persistWorkerConfig() {
+  const config = { apiId, apiHash, geminiKey, allowedChats, preferences };
+  await writeFile(CONFIG_FILE, JSON.stringify(config), { encoding: 'utf8', mode: 0o600 });
 }
 
 async function startTelegram(session = '') {
@@ -149,6 +163,7 @@ app.post('/api/configure', async (req, res) => {
       prompt: String(body.settings?.prompt || 'Reply naturally and briefly.').slice(0, 2000),
       delay: Math.max(0, Math.min(15, Number(body.settings?.delay) || 0)),
     };
+    await persistWorkerConfig();
     const session = await loadSession();
     if (session && (!connected || !client?.connected)) {
       await startTelegram(session);
@@ -227,9 +242,25 @@ app.get('/api/status', async (_req, res) => {
 });
 
 async function boot() {
+  const saved = await loadWorkerConfig();
+  if (saved) {
+    apiId = Number(saved.apiId || 0);
+    apiHash = String(saved.apiHash || '');
+    geminiKey = String(saved.geminiKey || '');
+    allowedChats = Array.isArray(saved.allowedChats) ? saved.allowedChats : [];
+    if (saved.preferences && typeof saved.preferences === 'object') preferences = { ...preferences, ...saved.preferences };
+  }
   const session = await loadSession();
-  if (session && apiId && apiHash) await startTelegram(session);
-  app.listen(PORT, '0.0.0.0', () => console.log('NEXORA Telegram Worker listening on ' + PORT));
+  if (session && apiId && apiHash) {
+    try {
+      await startTelegram(session);
+      console.log('Saved Telegram configuration restored; connected:', connected);
+    } catch (err) {
+      connected = false;
+      console.error('Telegram startup reconnect failed:', err?.message || err);
+    }
+  }
+  app.listen(PORT, '0..0.0', () => console.log('NEXORA Telegram Worker listening on ' + PORT));
 }
 boot().catch(err => {
   console.error('Worker startup failed:', err?.message || err);
