@@ -109,7 +109,7 @@ async function replyWithGemini(state, message) {
     message,
     'Write only the suggested reply.',
   ].join('\n');
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+  const models = ['gemini-3.8-flash'];
   let lastError = '';
   for (const model of models) {
     const response = await fetch(
