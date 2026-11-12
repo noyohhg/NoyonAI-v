@@ -260,7 +260,7 @@ async function boot() {
       console.error('Telegram startup reconnect failed:', err?.message || err);
     }
   }
-  app.listen(PORT, '0..0.0', () => console.log('NEXORA Telegram Worker listening on ' + PORT));
+  app.listen(PORT, '0.0.0.0', () => console.log('NEXORA Telegram Worker listening on ' + PORT));
 }
 boot().catch(err => {
   console.error('Worker startup failed:', err?.message || err);
