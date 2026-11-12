@@ -29,7 +29,7 @@ let preferences = {
 let handlerAttached = false;
 
 function protect(req, res, next) {
-  const supplied = (req.get('authorization') || '').replace(/^Bearer\\s+/i, '');
+  const supplied = (req.get('authorization') || '').replace(/^Bearer\s+/i, '');
   if (!TOKEN || supplied !== TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
