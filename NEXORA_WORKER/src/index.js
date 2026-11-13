@@ -52,6 +52,7 @@ function getAccount(userId) {
       reconnecting: false,
       inFlightMessages: new Set(),
       repliedMessages: new Set(),
+      conversationHistory: {},
     };
     accounts.set(userId, state);
   }
@@ -78,6 +79,7 @@ async function persistAccount(state) {
     geminiKey: state.geminiKey,
     allowedChats: state.allowedChats,
     preferences: state.preferences,
+    conversationHistory: state.conversationHistory,
     session: state.client ? state.client.session.save() : state.session,
   };
   await writeFile(accountFile(state.userId), JSON.stringify(record), {
@@ -102,15 +104,18 @@ async function startTelegram(state, session = state.session || '') {
   return state.connected;
 }
 
-async function replyWithGemini(state, message) {
+async function replyWithGemini(state, chatId, message) {
   if (!state.geminiKey) throw new Error('Gemini API key is not configured');
-  const prompt = [
+  const history = state.conversationHistory[chatId] || [];
+  const systemPrompt = [
+    'You are replying as the account owner in a natural, friendly Bengali/English chat style.',
+    'For a first-time sender, respond warmly to only what they actually said. Do not pretend you know them or invent shared history.',
+    'Adapt naturally to the sender’s language and level of formality (তুমি/তুই/আপনি); do not force slang or over-familiarity.',
+    'Be concise and relevant. Usually use one or two short sentences. Do not overthink, over-explain, repeat the question, or add unnecessary follow-up questions.',
+    'If the message is a greeting, greet naturally. If it asks something, answer it directly. If it shares a problem, respond helpfully and briefly.',
     state.preferences.prompt || 'Reply naturally and briefly.',
-    'Tone: ' + (state.preferences.tone || 'Friendly'),
-    'Language: ' + (state.preferences.language || 'Auto detect'),
-    'Incoming Telegram message:',
-    message,
-    'Write only the suggested reply.',
+    'Tone preference: ' + (state.preferences.tone || 'Friendly'),
+    'Language preference: ' + (state.preferences.language || 'Auto detect'),
   ].join('\n');
   const models = ['gemini-3.8-flash'];
   let lastError = '';
@@ -123,8 +128,9 @@ async function replyWithGemini(state, message) {
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(30000),
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: history.map(item => ({ role: item.role, parts: [{ text: item.text }] })),
+          generationConfig: { temperature: 0.65, maxOutputTokens: 160 },
         }),
       }
     );
@@ -160,8 +166,14 @@ function attachReplyHandler(state) {
       const delay = Math.max(0, Math.min(15, Number(state.preferences.delay) || 0));
       if (delay) await new Promise(resolve => setTimeout(resolve, delay * 1000));
       console.log('Generating AI reply; account:', accountTag, 'message:', message.id || 'unknown');
-      const answer = await replyWithGemini(state, message.message);
+      const history = state.conversationHistory[chatId] || (state.conversationHistory[chatId] = []);
+      history.push({ role: 'user', text: String(message.message).slice(0, 4000) });
+      while (history.length > 30) history.shift();
+      const answer = await replyWithGemini(state, chatId, message.message);
       if (!answer) throw new Error('AI returned an empty reply');
+      history.push({ role: 'model', text: answer.slice(0, 4000) });
+      while (history.length > 30) history.shift();
+      await persistAccount(state);
       console.log('AI reply generated; sending Telegram reply; account:', accountTag, 'message:', message.id || 'unknown');
       await message.reply({ message: answer });
       state.repliedMessages.add(messageKey);
@@ -334,6 +346,8 @@ async function boot() {
       state.geminiKey = String(saved.geminiKey || '');
       state.allowedChats = Array.isArray(saved.allowedChats) ? saved.allowedChats : [];
       state.preferences = { ...defaultPreferences, ...(saved.preferences || {}) };
+      state.conversationHistory = saved.conversationHistory && typeof saved.conversationHistory === 'object'
+        ? saved.conversationHistory : {};
       state.session = String(saved.session || '');
       if (state.session && apiId && apiHash) {
         try {
