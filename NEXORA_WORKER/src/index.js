@@ -49,6 +49,7 @@ function getAccount(userId) {
       pendingPhone: '',
       pendingPhoneCodeHash: '',
       handlerAttached: false,
+      reconnecting: false,
     };
     accounts.set(userId, state);
   }
@@ -332,6 +333,24 @@ async function boot() {
       console.error('Could not restore account file:', file, err?.message || err);
     }
   }
+  setInterval(async () => {
+    for (const state of accounts.values()) {
+      if (!state.session || state.reconnecting || state.client?.connected) continue;
+      state.reconnecting = true;
+      try {
+        await startTelegram(state, state.session);
+        if (state.connected) {
+          await persistAccount(state);
+          console.log('Telegram connection restored for account:', accountKey(state.userId).slice(0, 10));
+        }
+      } catch (err) {
+        console.error('Telegram reconnect attempt failed for account:', accountKey(state.userId).slice(0, 10), err?.message || err);
+      } finally {
+        state.reconnecting = false;
+      }
+    }
+  }, 30000);
+
   app.listen(PORT, '0.0.0.0', () => console.log('NEXORA multi-account Telegram Worker listening on ' + PORT));
 }
 boot().catch(err => {
