@@ -50,6 +50,8 @@ function getAccount(userId) {
       pendingPhoneCodeHash: '',
       handlerAttached: false,
       reconnecting: false,
+      inFlightMessages: new Set(),
+      repliedMessages: new Set(),
     };
     accounts.set(userId, state);
   }
@@ -119,6 +121,7 @@ async function replyWithGemini(state, message) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(30000),
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
@@ -144,19 +147,30 @@ function attachReplyHandler(state) {
     const message = event.message;
     if (!message?.message || message.out) return;
     const chatId = String(message.chatId || '');
-    console.log('Incoming Telegram message event; account:', accountKey(state.userId).slice(0, 10), 'enabled:', Boolean(state.preferences.enabled), 'connected:', Boolean(state.connected), 'chat:', chatId || 'unknown');
+    const accountTag = accountKey(state.userId).slice(0, 10);
+    const messageKey = chatId + ':' + String(message.id || '');
+    console.log('Incoming Telegram message event; account:', accountTag, 'enabled:', Boolean(state.preferences.enabled), 'connected:', Boolean(state.connected), 'chat:', chatId || 'unknown', 'message:', message.id || 'unknown');
     if (!state.connected || !state.preferences.enabled) return;
+    if (state.repliedMessages.has(messageKey) || state.inFlightMessages.has(messageKey)) {
+      console.log('Duplicate Telegram message ignored; account:', accountTag, 'message:', message.id || 'unknown');
+      return;
+    }
+    state.inFlightMessages.add(messageKey);
     try {
-      // Auto-reply is enabled for all incoming chats on this Telegram account.
-      // The per-account state keeps one user's settings/session isolated.
-
       const delay = Math.max(0, Math.min(15, Number(state.preferences.delay) || 0));
       if (delay) await new Promise(resolve => setTimeout(resolve, delay * 1000));
+      console.log('Generating AI reply; account:', accountTag, 'message:', message.id || 'unknown');
       const answer = await replyWithGemini(state, message.message);
+      if (!answer) throw new Error('AI returned an empty reply');
+      console.log('AI reply generated; sending Telegram reply; account:', accountTag, 'message:', message.id || 'unknown');
       await message.reply({ message: answer });
-      console.log('Telegram auto-reply sent; account:', accountKey(state.userId).slice(0, 10), 'chat:', chatId || 'unknown');
+      state.repliedMessages.add(messageKey);
+      if (state.repliedMessages.size > 2000) state.repliedMessages.delete(state.repliedMessages.values().next().value);
+      console.log('Telegram auto-reply sent; account:', accountTag, 'chat:', chatId || 'unknown', 'message:', message.id || 'unknown');
     } catch (err) {
-      console.error('Auto reply failed for account', accountKey(state.userId).slice(0, 10), err?.message || 'unknown error');
+      console.error('Auto reply failed for account', accountTag, 'message:', message.id || 'unknown', err?.message || 'unknown error');
+    } finally {
+      state.inFlightMessages.delete(messageKey);
     }
   }, new NewMessage({}));
   state.handlerAttached = true;
